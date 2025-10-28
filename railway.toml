@@ -1,0 +1,22 @@
+[build]
+builder = "DOCKERFILE"
+
+[[services]]
+name = "server"
+dockerfile = "apps/server/Dockerfile"
+
+[services.healthcheck]
+path = "/healthz"
+timeout = 10
+interval = 30
+
+[[services.env]]
+PORT = "3000"
+NODE_ENV = "production"
+
+[[services]]
+name = "client"
+dockerfile = "apps/client/Dockerfile"
+
+[[services.env]]
+PORT = "8080"

@@ -1,0 +1,63 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Sensitive keys
+*.pem
+private.key
+public.key
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Testing
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+
+# Prisma
+**/prisma/migrations/**/*.sql
+!**/prisma/migrations/**/migration.sql
+
+# Railway
+.railway/
+
+# Misc
+.turbo/
+.cache/
+*.tsbuildinfo
+
+# Temporary files
+tmp/
+temp/
+*.tmp

@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  displayName String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sessions       Session[]
+  magicLinks     MagicLinkToken[]
+  runs           Run[]
+  matchPlayers   MatchPlayer[]
+  cosmetics      UserCosmetic[]
+  eventLogs      EventLog[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  jwtId     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  ipHash    String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model MagicLinkToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("magic_link_tokens")
+}
+
+model Run {
+  id           String   @id @default(uuid())
+  userId       String
+  mode         String   // 'solo' | 'race'
+  distance     Float
+  score        Int
+  maxSpeed     Float
+  obstaclesHit Int
+  startedAt    DateTime @default(now())
+  endedAt      DateTime
+  seed         Int
+  durationMs   Int
+  metadata     Json?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([mode])
+  @@index([score, startedAt])
+  @@index([startedAt])
+  @@map("runs")
+}
+
+model Match {
+  id         String   @id @default(uuid())
+  mode       String   // 'race' | 'friends'
+  seed       Int
+  status     String   // 'lobby' | 'active' | 'complete'
+  createdAt  DateTime @default(now())
+  startedAt  DateTime?
+  endedAt    DateTime?
+  tickRate   Int      @default(20)
+  maxPlayers Int      @default(8)
+
+  players MatchPlayer[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("matches")
+}
+
+model MatchPlayer {
+  id           String    @id @default(uuid())
+  matchId      String
+  userId       String
+  joinedAt     DateTime  @default(now())
+  leftAt       DateTime?
+  finalScore   Int?
+  finalDistance Float?
+  placement    Int?
+
+  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, userId])
+  @@index([matchId])
+  @@index([userId])
+  @@map("match_players")
+}
+
+model Cosmetic {
+  id                String  @id @default(uuid())
+  key               String  @unique
+  name              String
+  type              String  // 'ski' | 'suit' | 'hat'
+  rarity            String  // 'common' | 'rare' | 'epic'
+  unlockedByDefault Boolean @default(false)
+
+  users UserCosmetic[]
+
+  @@index([type])
+  @@map("cosmetics")
+}
+
+model UserCosmetic {
+  id         String   @id @default(uuid())
+  userId     String
+  cosmeticId String
+  acquiredAt DateTime @default(now())
+  equipped   Boolean  @default(false)
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cosmetic Cosmetic @relation(fields: [cosmeticId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, cosmeticId])
+  @@index([userId])
+  @@index([cosmeticId])
+  @@map("user_cosmetics")
+}
+
+model EventLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  type      String
+  payload   Json
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("event_logs")
+}
