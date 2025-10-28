@@ -2,6 +2,7 @@ import type { ServerSnapshot, PlayerSnapshot } from '@skipay/shared';
 import { InputManager } from './Input.js';
 import { Renderer } from './Renderer.js';
 import { WebSocketClient } from './WebSocketClient.js';
+import { SoloPhysics } from './SoloPhysics.js';
 
 interface PredictedState {
   tick: number;
@@ -14,11 +15,13 @@ export class GameEngine {
   private renderer: Renderer;
   private inputManager: InputManager;
   private wsClient: WebSocketClient | null = null;
+  private soloPhysics: SoloPhysics | null = null;
 
   private running = false;
   private lastFrameTime = 0;
   private currentTick = 0;
   private inputSeq = 0;
+  private isSoloMode = false;
 
   // Client prediction
   private predictedStates: PredictedState[] = [];
@@ -110,6 +113,12 @@ export class GameEngine {
   start() {
     if (this.running) return;
 
+    // Initialize solo mode if no WebSocket
+    if (!this.wsClient) {
+      this.isSoloMode = true;
+      this.soloPhysics = new SoloPhysics();
+    }
+
     this.running = true;
     this.lastFrameTime = performance.now();
     this.gameLoop();
@@ -139,8 +148,20 @@ export class GameEngine {
     // Get input
     const inputState = this.inputManager.getState();
 
-    // Send input to server
-    if (this.wsClient && this.myPlayerId) {
+    // Solo mode - run local physics
+    if (this.isSoloMode && this.soloPhysics) {
+      this.soloPhysics.update(dt, {
+        steer: inputState.steer,
+        brake: inputState.brake,
+        tuck: inputState.tuck,
+        jump: inputState.jump,
+      });
+
+      const player = this.soloPhysics.getPlayer();
+      this.onScoreUpdate?.(player.score, player.distance);
+    }
+    // Multiplayer mode - send input to server
+    else if (this.wsClient && this.myPlayerId) {
       this.inputSeq++;
       this.currentTick++;
 
@@ -176,21 +197,34 @@ export class GameEngine {
     // Draw snow
     this.renderer.drawSnowTrail();
 
-    // Update camera to follow player
-    if (this.myPlayerId) {
+    // Solo mode rendering
+    if (this.isSoloMode && this.soloPhysics) {
+      const player = this.soloPhysics.getPlayer();
+      const obstacles = this.soloPhysics.getObstacles();
+
+      // Update camera
+      this.renderer.updateCamera(player);
+
+      // Draw obstacles
+      for (const obs of obstacles) {
+        this.renderer.drawSoloObstacle(obs);
+      }
+
+      // Draw player
+      this.renderer.drawSoloPlayer(player);
+    }
+    // Multiplayer mode rendering
+    else if (this.myPlayerId) {
       const myPlayer = this.players.get(this.myPlayerId);
       if (myPlayer) {
         this.renderer.updateCamera(myPlayer);
       }
-    }
 
-    // Draw players
-    for (const [id, player] of this.players) {
-      this.renderer.drawPlayer(player, id === this.myPlayerId);
+      // Draw players
+      for (const [id, player] of this.players) {
+        this.renderer.drawPlayer(player, id === this.myPlayerId);
+      }
     }
-
-    // Draw objects (would need to be synced from server)
-    // For now, objects are not rendered on client
   }
 
   setTouchInput(button: 'left' | 'right' | 'jump' | 'tuck' | 'brake', pressed: boolean) {

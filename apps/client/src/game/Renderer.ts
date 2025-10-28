@@ -31,7 +31,7 @@ export class Renderer {
     this.ctx.fillRect(0, 0, this.width, this.height);
   }
 
-  updateCamera(player: PlayerSnapshot) {
+  updateCamera(player: PlayerSnapshot | { x: number; y: number }) {
     // Camera follows player with some offset
     this.camera.x = player.x;
     this.camera.y = player.y - 200; // Keep player slightly below center
@@ -175,6 +175,93 @@ export class Renderer {
         this.ctx.arc(0, 0, 10, 0, Math.PI * 2);
         this.ctx.fill();
         break;
+    }
+
+    this.ctx.restore();
+  }
+
+  drawSoloObstacle(obs: { x: number; y: number; type: string; radius: number }) {
+    const screen = this.worldToScreen(obs.x, obs.y);
+
+    // Only draw if on screen
+    if (screen.y < -100 || screen.y > this.height + 100) return;
+    if (screen.x < -100 || screen.x > this.width + 100) return;
+
+    this.ctx.save();
+    this.ctx.translate(screen.x, screen.y);
+
+    switch (obs.type) {
+      case 'tree':
+        this.ctx.fillStyle = '#0f5132';
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, -25);
+        this.ctx.lineTo(-12, 8);
+        this.ctx.lineTo(12, 8);
+        this.ctx.closePath();
+        this.ctx.fill();
+        this.ctx.fillStyle = '#654321';
+        this.ctx.fillRect(-4, 8, 8, 12);
+        break;
+
+      case 'rock':
+        this.ctx.fillStyle = '#808080';
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, obs.radius, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.strokeStyle = '#606060';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+        break;
+
+      case 'stump':
+        this.ctx.fillStyle = '#8B4513';
+        this.ctx.fillRect(-8, -6, 16, 12);
+        this.ctx.strokeStyle = '#654321';
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(-8, -6, 16, 12);
+        break;
+    }
+
+    this.ctx.restore();
+  }
+
+  drawSoloPlayer(player: { x: number; y: number; state: string }) {
+    const screen = this.worldToScreen(player.x, player.y);
+
+    this.ctx.save();
+    this.ctx.translate(screen.x, screen.y);
+
+    if (player.state === 'crashed') {
+      this.ctx.fillStyle = '#ff0000';
+      this.ctx.fillRect(-12, -12, 24, 24);
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.font = 'bold 16px sans-serif';
+      this.ctx.textAlign = 'center';
+      this.ctx.fillText('CRASHED!', 0, -30);
+    } else if (player.state === 'jumping') {
+      this.ctx.fillStyle = '#3b82f6';
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, -20);
+      this.ctx.lineTo(-10, 10);
+      this.ctx.lineTo(10, 10);
+      this.ctx.closePath();
+      this.ctx.fill();
+    } else {
+      // Skiing
+      this.ctx.fillStyle = '#3b82f6';
+      this.ctx.beginPath();
+      this.ctx.arc(0, 0, 14, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Skis
+      this.ctx.strokeStyle = '#000000';
+      this.ctx.lineWidth = 3;
+      this.ctx.beginPath();
+      this.ctx.moveTo(-10, 10);
+      this.ctx.lineTo(-12, 20);
+      this.ctx.moveTo(10, 10);
+      this.ctx.lineTo(12, 20);
+      this.ctx.stroke();
     }
 
     this.ctx.restore();
