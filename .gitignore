@@ -61,3 +61,5 @@ playwright-report/
 tmp/
 temp/
 *.tmp
+RAILWAY_DEPLOYMENT_KEYS.md
+*.pem

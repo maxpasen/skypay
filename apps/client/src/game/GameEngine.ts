@@ -1,4 +1,3 @@
-import { GAME_CONSTANTS, PlayerState } from '@skipay/shared';
 import type { ServerSnapshot, PlayerSnapshot } from '@skipay/shared';
 import { InputManager } from './Input.js';
 import { Renderer } from './Renderer.js';
@@ -23,7 +22,6 @@ export class GameEngine {
 
   // Client prediction
   private predictedStates: PredictedState[] = [];
-  private lastServerSnapshot: ServerSnapshot | null = null;
 
   // Game state
   private myPlayerId: string | null = null;
@@ -83,8 +81,6 @@ export class GameEngine {
   }
 
   private handleSnapshot(snapshot: ServerSnapshot) {
-    this.lastServerSnapshot = snapshot;
-
     // Update players
     this.players.clear();
     for (const player of snapshot.players) {

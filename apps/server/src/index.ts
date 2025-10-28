@@ -15,7 +15,16 @@ import { WebSocketServerManager } from './ws/websocket-server.js';
 
 // Create Fastify instance
 const fastify = Fastify({
-  logger: logger,
+  logger: isDev ? {
+    transport: {
+      target: 'pino-pretty',
+      options: {
+        colorize: true,
+        translateTime: 'HH:MM:ss',
+        ignore: 'pid,hostname',
+      },
+    },
+  } : true,
   trustProxy: true,
 });
 

@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { SubmitRunSchema, LeaderboardRangeSchema, EquipCosmeticSchema } from '@skipay/shared';
+import { SubmitRunSchema, EquipCosmeticSchema } from '@skipay/shared';
 import { prisma } from '../lib/db.js';
 
 export async function gameRoutes(fastify: FastifyInstance) {
@@ -54,7 +54,7 @@ export async function gameRoutes(fastify: FastifyInstance) {
         required: ['range'],
       },
     },
-    handler: async (request, reply) => {
+    handler: async (request, _reply) => {
       const { range } = request.query as { range: 'daily' | 'weekly' | 'all' };
 
       let startDate: Date | undefined;
@@ -184,7 +184,7 @@ export async function gameRoutes(fastify: FastifyInstance) {
    */
   fastify.post('/matchmaking/quick', {
     onRequest: [fastify.authenticate],
-    handler: async (request, reply) => {
+    handler: async (_request, reply) => {
       // This endpoint is simplified - actual matchmaking happens via WebSocket
       // This is just a placeholder to satisfy the API requirements
 

@@ -17,7 +17,7 @@
     "generate:keys": "node scripts/generate-keys.js",
     "check:setup": "node scripts/check-setup.js",
     "clean": "pnpm --recursive exec rm -rf dist node_modules && rm -rf node_modules",
-    "postinstall": "pnpm --filter @skipay/shared build && pnpm --filter @skipay/server prisma generate"
+    "postinstall": "pnpm --filter @skipay/shared build && pnpm --filter @skipay/server db:generate"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.0",

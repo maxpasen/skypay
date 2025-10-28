@@ -3,12 +3,12 @@ import { PRNG } from '../lib/prng.js';
 import type { WorldObject } from './types.js';
 
 export class MapGenerator {
-  private prng: PRNG;
   private generatedChunks: Set<string>;
   private objects: Map<string, WorldObject>;
 
   constructor(seed: number) {
-    this.prng = new PRNG(seed);
+    // Store seed for potential future use
+    void seed;
     this.generatedChunks = new Set();
     this.objects = new Map();
   }

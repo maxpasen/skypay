@@ -64,7 +64,6 @@ describe('PhysicsEngine', () => {
 
     it('should not jump if already jumping', () => {
       player.state = PlayerState.JUMPING;
-      const initialVelocityY = player.velocity.y;
 
       const intent: PlayerIntent = { steer: 0, brake: 0, tuck: 0, jump: 1 };
 

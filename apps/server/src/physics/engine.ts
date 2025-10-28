@@ -1,5 +1,5 @@
 import { GAME_CONSTANTS, PlayerState } from '@skipay/shared';
-import type { PlayerIntent, PlayerPhysics, Vec2, WorldObject, CollisionResult } from './types.js';
+import type { PlayerIntent, PlayerPhysics, WorldObject, CollisionResult } from './types.js';
 
 export class PhysicsEngine {
   /**
@@ -54,7 +54,7 @@ export class PhysicsEngine {
     }
 
     // Calculate acceleration
-    let accel = GAME_CONSTANTS.ACCELERATION;
+    let accel: number = GAME_CONSTANTS.ACCELERATION;
     if (intent.tuck === 1) {
       accel += GAME_CONSTANTS.TUCK_ACCELERATION_BONUS;
     }

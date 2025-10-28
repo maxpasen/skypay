@@ -1,7 +1,7 @@
 import { GAME_CONSTANTS, PlayerState, MatchMode, MatchStatus } from '@skipay/shared';
 import { PhysicsEngine } from '../physics/engine.js';
 import { MapGenerator } from '../physics/map-generator.js';
-import type { PlayerPhysics, PlayerIntent, WorldObject } from '../physics/types.js';
+import type { PlayerPhysics, PlayerIntent } from '../physics/types.js';
 import { logger } from '../lib/logger.js';
 import { prisma } from '../lib/db.js';
 
@@ -27,7 +27,6 @@ export class Match {
   private physicsEngine: PhysicsEngine;
   private mapGenerator: MapGenerator;
   private currentTick: number;
-  private startTime: number;
   private tickInterval: NodeJS.Timeout | null;
 
   constructor(
@@ -48,7 +47,6 @@ export class Match {
     this.physicsEngine = new PhysicsEngine();
     this.mapGenerator = new MapGenerator(seed);
     this.currentTick = 0;
-    this.startTime = 0;
     this.tickInterval = null;
   }
 
@@ -126,7 +124,6 @@ export class Match {
     }
 
     this.status = MatchStatus.ACTIVE;
-    this.startTime = Date.now();
     this.currentTick = 0;
 
     // Start tick loop
@@ -149,7 +146,7 @@ export class Match {
     const allEvents: any[] = [];
 
     // Process each player
-    for (const [playerId, player] of this.players.entries()) {
+    for (const [_playerId, player] of this.players.entries()) {
       if (!player.connected) continue;
 
       // Get latest input from queue

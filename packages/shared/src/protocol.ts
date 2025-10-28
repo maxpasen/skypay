@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MatchMode, MatchStatus, ObstacleType, PickupType, PlayerState } from './constants.js';
+import { MatchMode, ObstacleType, PickupType, PlayerState } from './constants.js';
 
 // ============================================================================
 // Client -> Server Messages

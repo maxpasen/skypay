@@ -64,7 +64,7 @@ export class WebSocketServerManager {
   /**
    * Handle new WebSocket connection
    */
-  private async handleConnection(ws: AuthenticatedWebSocket, request: IncomingMessage) {
+  private async handleConnection(ws: AuthenticatedWebSocket, _request: IncomingMessage) {
     ws.isAlive = true;
 
     ws.on('pong', () => {
