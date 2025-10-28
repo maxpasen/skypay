@@ -28,20 +28,14 @@ export function Game() {
     setIsPlaying(true);
 
     if (mode === 'quick' || mode === 'friends') {
-      // Get token from cookie (simplified - in production use proper auth)
+      // Get token from cookie, or use 'guest' for anonymous play
       const token = document.cookie
         .split('; ')
         .find((row) => row.startsWith('token='))
-        ?.split('=')[1];
-
-      if (!token) {
-        alert('Please login first!');
-        navigate('/');
-        return;
-      }
+        ?.split('=')[1] || 'guest';
 
       engine.connectMultiplayer(token, mode);
-      setConnectionStatus('Connected');
+      setConnectionStatus(token === 'guest' ? 'Guest Mode' : 'Connected');
     } else {
       // Solo mode - just start the game loop
       engine.start();

@@ -129,24 +129,38 @@ export class WebSocketServerManager {
     roomCode?: string
   ) {
     try {
-      // Verify JWT
-      const decoded = this.fastify.jwt.verify(token) as { sub: string; email: string };
+      let userId: string;
+      let displayName: string;
+      let isGuest = false;
 
-      // Get user
-      const user = await prisma.user.findUnique({
-        where: { id: decoded.sub },
-      });
+      // Guest mode - allow anonymous play
+      if (!token || token === 'guest') {
+        isGuest = true;
+        userId = `guest-${nanoid()}`;
+        displayName = `Guest_${Math.floor(Math.random() * 9000) + 1000}`;
+        logger.info({ displayName, mode }, 'Guest player joining');
+      } else {
+        // Authenticated user - verify JWT
+        const decoded = this.fastify.jwt.verify(token) as { sub: string; email: string };
 
-      if (!user) {
-        this.sendError(ws, 'auth_failed', 'User not found');
-        ws.close();
-        return;
+        // Get user
+        const user = await prisma.user.findUnique({
+          where: { id: decoded.sub },
+        });
+
+        if (!user) {
+          this.sendError(ws, 'auth_failed', 'User not found');
+          ws.close();
+          return;
+        }
+
+        userId = user.id;
+        displayName = user.displayName;
+        logger.info({ userId: user.id, playerId: ws.playerId, mode }, 'Player authenticated');
       }
 
-      ws.userId = user.id;
+      ws.userId = userId;
       ws.playerId = nanoid();
-
-      logger.info({ userId: user.id, playerId: ws.playerId, mode }, 'Player authenticated');
 
       // Find or create match
       let match;
@@ -187,7 +201,7 @@ export class WebSocketServerManager {
       }
 
       // Add player to match
-      const joined = match.addPlayer(ws.playerId, user.id, user.displayName);
+      const joined = match.addPlayer(ws.playerId, userId, displayName);
 
       if (!joined) {
         this.sendError(ws, 'match_full', 'Match is full');
@@ -197,13 +211,15 @@ export class WebSocketServerManager {
 
       ws.matchId = match.id;
 
-      // Create match player record
-      await prisma.matchPlayer.create({
-        data: {
-          matchId: match.id,
-          userId: user.id,
-        },
-      });
+      // Create match player record (only for authenticated users)
+      if (!isGuest) {
+        await prisma.matchPlayer.create({
+          data: {
+            matchId: match.id,
+            userId: userId,
+          },
+        });
+      }
 
       // Send welcome message
       const welcome: ServerWelcome = {
