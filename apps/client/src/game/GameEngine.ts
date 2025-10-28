@@ -1,4 +1,4 @@
-import type { ServerSnapshot, PlayerSnapshot } from '@skipay/shared';
+import type { ServerSnapshot, PlayerSnapshot, GameObject } from '@skipay/shared';
 import { InputManager } from './Input.js';
 import { Renderer } from './Renderer.js';
 import { WebSocketClient } from './WebSocketClient.js';
@@ -29,6 +29,7 @@ export class GameEngine {
   // Game state
   private myPlayerId: string | null = null;
   private players: Map<string, PlayerSnapshot> = new Map();
+  private gameObjects: Map<string, GameObject> = new Map();
 
   private onScoreUpdate?: (score: number, distance: number) => void;
 
@@ -92,6 +93,17 @@ export class GameEngine {
     this.players.clear();
     for (const player of snapshot.players) {
       this.players.set(player.id, player);
+    }
+
+    // Update game objects (obstacles, pickups)
+    if (snapshot.objectsDelta) {
+      for (const obj of snapshot.objectsDelta) {
+        if (obj.removed) {
+          this.gameObjects.delete(obj.id);
+        } else {
+          this.gameObjects.set(obj.id, obj);
+        }
+      }
     }
 
     // Client-side reconciliation
@@ -220,9 +232,25 @@ export class GameEngine {
         this.renderer.updateCamera(myPlayer);
       }
 
-      // Draw players
+      // Draw game objects (obstacles, pickups)
+      for (const obj of this.gameObjects.values()) {
+        this.renderer.drawObject(obj);
+      }
+
+      // Draw all players with emoji graphics
       for (const [id, player] of this.players) {
-        this.renderer.drawPlayer(player, id === this.myPlayerId);
+        const isYou = id === this.myPlayerId;
+        // Use emoji graphics for all players
+        this.renderer.drawSoloPlayer({
+          x: player.x,
+          y: player.y,
+          state: player.state, // PlayerState is already a string enum
+        });
+
+        // Draw name tag for other players
+        if (!isYou) {
+          this.renderer.drawPlayerName(player.x, player.y, 'Player');
+        }
       }
     }
   }

@@ -330,6 +330,7 @@ export class WebSocketServerManager {
                 ...p,
                 isYou: p.id === ws.playerId,
               })),
+              objectsDelta: state.objects,
               you: {
                 ackSeq: player.lastAckedSeq,
               },

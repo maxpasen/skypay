@@ -258,4 +258,23 @@ export class Renderer {
       this.ctx.fill();
     }
   }
+
+  drawPlayerName(x: number, y: number, name: string) {
+    const screen = this.worldToScreen(x, y);
+
+    this.ctx.save();
+    this.ctx.fillStyle = '#ffffff';
+    this.ctx.strokeStyle = '#000000';
+    this.ctx.lineWidth = 3;
+    this.ctx.font = 'bold 20px sans-serif';
+    this.ctx.textAlign = 'center';
+    this.ctx.textBaseline = 'middle';
+
+    // Draw outline
+    this.ctx.strokeText(name, screen.x, screen.y - 60);
+    // Draw text
+    this.ctx.fillText(name, screen.x, screen.y - 60);
+
+    this.ctx.restore();
+  }
 }

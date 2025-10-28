@@ -252,6 +252,18 @@ export class Match {
    * Get current game state
    */
   getState() {
+    // Find the furthest player to determine what objects to send
+    let maxY = 0;
+    for (const player of this.players.values()) {
+      if (player.physics.position.y > maxY) {
+        maxY = player.physics.position.y;
+      }
+    }
+
+    // Get objects in view (behind and ahead of furthest player)
+    const viewRadius = GAME_CONSTANTS.CHUNK_SIZE * 2; // Show 2 chunks worth
+    const objects = this.mapGenerator.getObjectsNear(0, maxY, viewRadius);
+
     return {
       tick: this.currentTick,
       serverTime: Date.now(),
@@ -265,6 +277,13 @@ export class Match {
         state: p.physics.state,
         distance: p.physics.distance,
         score: p.physics.score,
+      })),
+      objects: objects.map((obj) => ({
+        id: obj.id,
+        type: obj.type,
+        x: obj.position.x,
+        y: obj.position.y,
+        removed: !obj.active,
       })),
     };
   }
