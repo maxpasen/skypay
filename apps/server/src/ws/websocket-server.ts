@@ -25,6 +25,7 @@ export class WebSocketServerManager {
   private wss: WebSocketServer;
   private matchManager: MatchManager;
   private fastify: FastifyInstance;
+  private broadcastIntervals: Map<string, NodeJS.Timeout> = new Map();
 
   constructor(fastify: FastifyInstance) {
     this.fastify = fastify;
@@ -234,16 +235,16 @@ export class WebSocketServerManager {
 
       ws.send(JSON.stringify(welcome));
 
-      // Start match if enough players (for quick race)
-      if (mode === MatchMode.QUICK_RACE && match.status === MatchStatus.LOBBY && match.getPlayerCount() >= 2) {
+      // Start match immediately for quick race (allow solo play)
+      if (mode === MatchMode.QUICK_RACE && match.status === MatchStatus.LOBBY) {
         setTimeout(() => {
           if (match.status === MatchStatus.LOBBY) {
             match.start();
             this.startBroadcastLoop(match.id);
           }
         }, 3000);
-      } else if (mode === MatchMode.FRIENDS && match.status === MatchStatus.ACTIVE) {
-        // Already started, just sync
+      } else if (match.status === MatchStatus.ACTIVE) {
+        // Already started, ensure broadcast loop is running
         this.startBroadcastLoop(match.id);
       }
     } catch (error) {
@@ -303,11 +304,17 @@ export class WebSocketServerManager {
     const match = this.matchManager.getMatch(matchId);
     if (!match) return;
 
+    // Don't create duplicate broadcast loops
+    if (this.broadcastIntervals.has(matchId)) {
+      return;
+    }
+
     const broadcastInterval = setInterval(() => {
       const currentMatch = this.matchManager.getMatch(matchId);
 
       if (!currentMatch || currentMatch.status === MatchStatus.COMPLETE) {
         clearInterval(broadcastInterval);
+        this.broadcastIntervals.delete(matchId);
         return;
       }
 
@@ -341,6 +348,9 @@ export class WebSocketServerManager {
         }
       });
     }, 1000 / match.tickRate);
+
+    // Store the interval so we don't create duplicates
+    this.broadcastIntervals.set(matchId, broadcastInterval);
   }
 
   /**
