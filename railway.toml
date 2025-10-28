@@ -1,5 +1,5 @@
-[build]
-builder = "DOCKERFILE"
+# Railway.toml configuration for SkiPay
+# Deploys two services: server (backend) and client (frontend)
 
 [[services]]
 name = "server"
@@ -10,13 +10,6 @@ path = "/healthz"
 timeout = 10
 interval = 30
 
-[[services.env]]
-PORT = "3000"
-NODE_ENV = "production"
-
 [[services]]
 name = "client"
 dockerfile = "apps/client/Dockerfile"
-
-[[services.env]]
-PORT = "8080"
