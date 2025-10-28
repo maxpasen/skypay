@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { SubmitRunSchema, EquipCosmeticSchema } from '@skipay/shared';
 import { prisma } from '../lib/db.js';
+import { Prisma } from '@prisma/client';
 
 export async function gameRoutes(fastify: FastifyInstance) {
   /**
@@ -9,12 +10,15 @@ export async function gameRoutes(fastify: FastifyInstance) {
    */
   fastify.post('/runs', {
     onRequest: [fastify.authenticate],
-    schema: {
-      body: SubmitRunSchema,
-    },
     handler: async (request, reply) => {
       const user = request.user as { sub: string };
-      const runData = request.body as any;
+
+      // Validate with Zod
+      const result = SubmitRunSchema.safeParse(request.body);
+      if (!result.success) {
+        return reply.code(400).send({ error: 'Invalid run data', details: result.error.issues });
+      }
+      const runData = result.data;
 
       try {
         const run = await prisma.run.create({
@@ -28,7 +32,7 @@ export async function gameRoutes(fastify: FastifyInstance) {
             endedAt: new Date(),
             seed: runData.seed,
             durationMs: runData.durationMs,
-            metadata: runData.metadata || {},
+            metadata: (runData.metadata || {}) as Prisma.InputJsonValue,
           },
         });
 
@@ -132,12 +136,15 @@ export async function gameRoutes(fastify: FastifyInstance) {
    */
   fastify.post('/cosmetics/equip', {
     onRequest: [fastify.authenticate],
-    schema: {
-      body: EquipCosmeticSchema,
-    },
     handler: async (request, reply) => {
       const user = request.user as { sub: string };
-      const { cosmeticId } = request.body as { cosmeticId: string };
+
+      // Validate with Zod
+      const result = EquipCosmeticSchema.safeParse(request.body);
+      if (!result.success) {
+        return reply.code(400).send({ error: 'Invalid cosmetic data', details: result.error.issues });
+      }
+      const { cosmeticId } = result.data;
 
       try {
         // Check if user owns this cosmetic

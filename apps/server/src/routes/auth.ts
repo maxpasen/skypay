@@ -13,7 +13,13 @@ export async function authRoutes(fastify: FastifyInstance) {
    */
   fastify.post('/auth/magic-link', {
     schema: {
-      body: MagicLinkRequestSchema,
+      body: {
+        type: 'object',
+        required: ['email'],
+        properties: {
+          email: { type: 'string', format: 'email' },
+        },
+      },
       response: {
         200: {
           type: 'object',
@@ -24,7 +30,12 @@ export async function authRoutes(fastify: FastifyInstance) {
       },
     },
     handler: async (request, reply) => {
-      const { email } = request.body as { email: string };
+      // Validate with Zod for runtime safety
+      const result = MagicLinkRequestSchema.safeParse(request.body);
+      if (!result.success) {
+        return reply.code(400).send({ error: 'Invalid email address' });
+      }
+      const { email } = result.data;
 
       try {
         await magicLinkService.sendMagicLink(email);
