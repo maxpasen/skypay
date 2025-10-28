@@ -1,5 +1,6 @@
 import type { UserResponse, LeaderboardResponse, LeaderboardRange } from '@skipay/shared';
 
+// Use relative URLs in production (same server hosts API and frontend)
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 export const api = {

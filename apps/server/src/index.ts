@@ -6,12 +6,18 @@ import fastifyJwt from '@fastify/jwt';
 import fastifyRateLimit from '@fastify/rate-limit';
 import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
+import fastifyStatic from '@fastify/static';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { config, isDev } from './lib/config.js';
 import { logger } from './lib/logger.js';
 import { prisma } from './lib/db.js';
 import { authRoutes } from './routes/auth.js';
 import { gameRoutes } from './routes/game.js';
 import { WebSocketServerManager } from './ws/websocket-server.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Create Fastify instance
 const fastify = Fastify({
@@ -89,6 +95,35 @@ fastify.decorate('authenticate', async (request: any, reply: any) => {
 // Routes
 await fastify.register(authRoutes);
 await fastify.register(gameRoutes);
+
+// Serve static files (client build) in production
+if (!isDev) {
+  const clientDistPath = join(__dirname, '../../client/dist');
+
+  await fastify.register(fastifyStatic, {
+    root: clientDistPath,
+    prefix: '/',
+  });
+
+  // SPA fallback - serve index.html for all non-API routes
+  fastify.setNotFoundHandler(async (request, reply) => {
+    // Don't redirect API routes
+    if (request.url.startsWith('/auth') ||
+        request.url.startsWith('/runs') ||
+        request.url.startsWith('/leaderboard') ||
+        request.url.startsWith('/cosmetics') ||
+        request.url.startsWith('/matchmaking') ||
+        request.url.startsWith('/me') ||
+        request.url.startsWith('/docs') ||
+        request.url.startsWith('/healthz') ||
+        request.url.startsWith('/ws')) {
+      return reply.code(404).send({ error: 'Not found' });
+    }
+
+    // Serve index.html for SPA routes
+    return reply.sendFile('index.html');
+  });
+}
 
 // Health check
 fastify.get('/healthz', async () => {

@@ -56,7 +56,11 @@ export class GameEngine {
   }
 
   connectMultiplayer(token: string, mode: string, roomCode?: string) {
-    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:3000/ws';
+    // Auto-detect WebSocket URL based on current location
+    const wsUrl = import.meta.env.VITE_WS_URL || (() => {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${protocol}//${window.location.host}/ws`;
+    })();
 
     this.wsClient = new WebSocketClient(wsUrl, {
       onWelcome: (msg) => {
