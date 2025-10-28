@@ -32,9 +32,9 @@ export class Renderer {
   }
 
   updateCamera(player: PlayerSnapshot | { x: number; y: number }) {
-    // Camera follows player with some offset
+    // Camera follows player with offset - show more ahead
     this.camera.x = player.x;
-    this.camera.y = player.y - 200; // Keep player slightly below center
+    this.camera.y = player.y - 300; // Keep player lower on screen, see more ahead
   }
 
   worldToScreen(x: number, y: number): { x: number; y: number } {
@@ -184,41 +184,30 @@ export class Renderer {
     const screen = this.worldToScreen(obs.x, obs.y);
 
     // Only draw if on screen
-    if (screen.y < -100 || screen.y > this.height + 100) return;
-    if (screen.x < -100 || screen.x > this.width + 100) return;
+    if (screen.y < -200 || screen.y > this.height + 200) return;
+    if (screen.x < -200 || screen.x > this.width + 200) return;
 
     this.ctx.save();
     this.ctx.translate(screen.x, screen.y);
 
+    // Use emojis for obstacles - much bigger and clearer!
+    this.ctx.textAlign = 'center';
+    this.ctx.textBaseline = 'middle';
+
     switch (obs.type) {
       case 'tree':
-        this.ctx.fillStyle = '#0f5132';
-        this.ctx.beginPath();
-        this.ctx.moveTo(0, -25);
-        this.ctx.lineTo(-12, 8);
-        this.ctx.lineTo(12, 8);
-        this.ctx.closePath();
-        this.ctx.fill();
-        this.ctx.fillStyle = '#654321';
-        this.ctx.fillRect(-4, 8, 8, 12);
+        this.ctx.font = '64px sans-serif'; // Big emoji!
+        this.ctx.fillText('🌲', 0, 0);
         break;
 
       case 'rock':
-        this.ctx.fillStyle = '#808080';
-        this.ctx.beginPath();
-        this.ctx.arc(0, 0, obs.radius, 0, Math.PI * 2);
-        this.ctx.fill();
-        this.ctx.strokeStyle = '#606060';
-        this.ctx.lineWidth = 2;
-        this.ctx.stroke();
+        this.ctx.font = '56px sans-serif';
+        this.ctx.fillText('🪨', 0, 0);
         break;
 
       case 'stump':
-        this.ctx.fillStyle = '#8B4513';
-        this.ctx.fillRect(-8, -6, 16, 12);
-        this.ctx.strokeStyle = '#654321';
-        this.ctx.lineWidth = 1;
-        this.ctx.strokeRect(-8, -6, 16, 12);
+        this.ctx.font = '52px sans-serif';
+        this.ctx.fillText('🪵', 0, 0);
         break;
     }
 
@@ -230,38 +219,29 @@ export class Renderer {
 
     this.ctx.save();
     this.ctx.translate(screen.x, screen.y);
+    this.ctx.textAlign = 'center';
+    this.ctx.textBaseline = 'middle';
 
     if (player.state === 'crashed') {
-      this.ctx.fillStyle = '#ff0000';
-      this.ctx.fillRect(-12, -12, 24, 24);
-      this.ctx.fillStyle = '#ffffff';
-      this.ctx.font = 'bold 16px sans-serif';
-      this.ctx.textAlign = 'center';
-      this.ctx.fillText('CRASHED!', 0, -30);
-    } else if (player.state === 'jumping') {
-      this.ctx.fillStyle = '#3b82f6';
-      this.ctx.beginPath();
-      this.ctx.moveTo(0, -20);
-      this.ctx.lineTo(-10, 10);
-      this.ctx.lineTo(10, 10);
-      this.ctx.closePath();
-      this.ctx.fill();
-    } else {
-      // Skiing
-      this.ctx.fillStyle = '#3b82f6';
-      this.ctx.beginPath();
-      this.ctx.arc(0, 0, 14, 0, Math.PI * 2);
-      this.ctx.fill();
+      // Crashed - show explosion/crash
+      this.ctx.font = '72px sans-serif';
+      this.ctx.fillText('💥', 0, 0);
 
-      // Skis
-      this.ctx.strokeStyle = '#000000';
-      this.ctx.lineWidth = 3;
-      this.ctx.beginPath();
-      this.ctx.moveTo(-10, 10);
-      this.ctx.lineTo(-12, 20);
-      this.ctx.moveTo(10, 10);
-      this.ctx.lineTo(12, 20);
-      this.ctx.stroke();
+      // CRASHED text
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.strokeStyle = '#ff0000';
+      this.ctx.lineWidth = 4;
+      this.ctx.font = 'bold 32px sans-serif';
+      this.ctx.strokeText('CRASHED!', 0, -60);
+      this.ctx.fillText('CRASHED!', 0, -60);
+    } else if (player.state === 'jumping') {
+      // Jumping - show skier in air
+      this.ctx.font = '80px sans-serif';
+      this.ctx.fillText('🎿', 0, -10); // Skier emoji, offset up
+    } else {
+      // Skiing - normal skier
+      this.ctx.font = '80px sans-serif';
+      this.ctx.fillText('⛷️', 0, 0);
     }
 
     this.ctx.restore();

@@ -109,9 +109,9 @@ export class SoloPhysics {
     this.player.y += this.player.vy * dt;
     this.player.distance = this.player.y;
 
-    // Keep player centered
-    if (this.player.x < -200) this.player.x = -200;
-    if (this.player.x > 200) this.player.x = 200;
+    // Keep player in bounds (wider for easier gameplay)
+    if (this.player.x < -350) this.player.x = -350;
+    if (this.player.x > 350) this.player.x = 350;
 
     // Generate more obstacles as player advances
     if (this.player.y > this.obstacles[this.obstacles.length - 1].y - 1000) {
@@ -131,14 +131,16 @@ export class SoloPhysics {
   private checkCollisions() {
     if (this.player.state === 'jumping') return;
 
-    const playerRadius = 10;
+    // Smaller collision radius for more forgiving gameplay
+    const playerRadius = 25;
 
     for (const obs of this.obstacles) {
       const dx = this.player.x - obs.x;
       const dy = this.player.y - obs.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
 
-      if (distance < playerRadius + obs.radius) {
+      // More forgiving collision - need to really hit the obstacle
+      if (distance < playerRadius + obs.radius - 10) {
         this.player.state = 'crashed';
         this.player.vx = 0;
         this.player.vy = 0;
@@ -148,25 +150,31 @@ export class SoloPhysics {
   }
 
   private generateObstacles() {
-    const startY = this.obstacles.length === 0 ? 100 : this.obstacles[this.obstacles.length - 1].y + 100;
+    const startY = this.obstacles.length === 0 ? 200 : this.obstacles[this.obstacles.length - 1].y + 150;
 
-    for (let i = 0; i < 20; i++) {
-      const y = startY + i * 50;
-      const count = Math.floor(Math.random() * 3) + 1;
+    // Fewer obstacles, more spread out
+    for (let i = 0; i < 15; i++) {
+      const y = startY + i * 100; // More space between rows
 
-      for (let j = 0; j < count; j++) {
-        const x = (Math.random() - 0.5) * 400; // -200 to 200
-        const types: Array<'tree' | 'rock' | 'stump'> = ['tree', 'rock', 'stump'];
-        const type = types[Math.floor(Math.random() * types.length)];
-        const radius = type === 'tree' ? 15 : type === 'rock' ? 12 : 10;
+      // Only 30% chance of obstacles per row
+      if (Math.random() < 0.7) {
+        const count = Math.floor(Math.random() * 2) + 1; // 1-2 obstacles per row
 
-        this.obstacles.push({
-          id: `obs-${this.nextObstacleId++}`,
-          x,
-          y,
-          type,
-          radius,
-        });
+        for (let j = 0; j < count; j++) {
+          // Wider spread, easier to dodge
+          const x = (Math.random() - 0.5) * 600; // -300 to 300
+          const types: Array<'tree' | 'rock' | 'stump'> = ['tree', 'rock', 'stump'];
+          const type = types[Math.floor(Math.random() * types.length)];
+          const radius = type === 'tree' ? 20 : type === 'rock' ? 18 : 15;
+
+          this.obstacles.push({
+            id: `obs-${this.nextObstacleId++}`,
+            x,
+            y,
+            type,
+            radius,
+          });
+        }
       }
     }
   }
