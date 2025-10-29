@@ -130,6 +130,8 @@ export class WebSocketServerManager {
     roomCode?: string
   ) {
     try {
+      logger.info({ token: token === 'guest' ? 'guest' : 'jwt', mode, roomCode }, 'handleAuth called');
+
       let userId: string;
       let displayName: string;
       let isGuest = false;
@@ -139,7 +141,7 @@ export class WebSocketServerManager {
         isGuest = true;
         userId = `guest-${nanoid()}`;
         displayName = `Guest_${Math.floor(Math.random() * 9000) + 1000}`;
-        logger.info({ displayName, mode }, 'Guest player joining');
+        logger.info({ displayName, mode, userId }, 'Guest player created');
       } else {
         // Authenticated user - verify JWT
         const decoded = this.fastify.jwt.verify(token) as { sub: string; email: string };
@@ -162,19 +164,23 @@ export class WebSocketServerManager {
 
       ws.userId = userId;
       ws.playerId = nanoid();
+      logger.info({ userId, playerId: ws.playerId }, 'Player IDs assigned');
 
       // Find or create match
       let match;
 
       if (mode === MatchMode.QUICK_RACE) {
+        logger.info('Finding or creating QUICK_RACE match');
         // Find available match or create new one
         match = this.matchManager.findAvailableMatch(mode);
 
         if (!match) {
+          logger.info('No available match found, creating new match');
           const matchId = nanoid();
           const seed = Math.floor(Math.random() * 1000000);
 
           // Create match in database
+          logger.info({ matchId, mode, seed }, 'Creating match in database');
           const dbMatch = await prisma.match.create({
             data: {
               id: matchId,
@@ -183,8 +189,12 @@ export class WebSocketServerManager {
               status: MatchStatus.LOBBY,
             },
           });
+          logger.info({ matchId: dbMatch.id }, 'Match created in database');
 
           match = this.matchManager.createMatch(dbMatch.id, mode, seed);
+          logger.info({ matchId: match.id }, 'Match created in memory');
+        } else {
+          logger.info({ matchId: match.id }, 'Found existing match');
         }
       } else if (mode === MatchMode.FRIENDS && roomCode) {
         // Join existing match by room code
@@ -202,24 +212,31 @@ export class WebSocketServerManager {
       }
 
       // Add player to match
+      logger.info({ playerId: ws.playerId, matchId: match.id, displayName }, 'Adding player to match');
       const joined = match.addPlayer(ws.playerId, userId, displayName);
 
       if (!joined) {
+        logger.error('Failed to add player to match - match full');
         this.sendError(ws, 'match_full', 'Match is full');
         ws.close();
         return;
       }
+      logger.info('Player added to match successfully');
 
       ws.matchId = match.id;
 
       // Create match player record (only for authenticated users)
       if (!isGuest) {
+        logger.info('Creating matchPlayer database record');
         await prisma.matchPlayer.create({
           data: {
             matchId: match.id,
             userId: userId,
           },
         });
+        logger.info('matchPlayer record created');
+      } else {
+        logger.info('Skipping matchPlayer record for guest');
       }
 
       // Send welcome message
@@ -233,7 +250,9 @@ export class WebSocketServerManager {
         players: match.getPlayers(),
       };
 
+      logger.info({ welcome }, 'Sending welcome message');
       ws.send(JSON.stringify(welcome));
+      logger.info('Welcome message sent successfully');
 
       // Start match immediately for quick race (allow solo play)
       if (mode === MatchMode.QUICK_RACE && match.status === MatchStatus.LOBBY) {
@@ -248,8 +267,8 @@ export class WebSocketServerManager {
         this.startBroadcastLoop(match.id);
       }
     } catch (error) {
-      logger.error({ error }, 'Auth error');
-      this.sendError(ws, 'auth_failed', 'Authentication failed');
+      logger.error({ error, stack: error instanceof Error ? error.stack : undefined }, 'Auth error - full details');
+      this.sendError(ws, 'auth_failed', `Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       ws.close();
     }
   }
