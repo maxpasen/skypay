@@ -9,7 +9,7 @@ export const ClientInputSchema = z.object({
   type: z.literal('input'),
   seq: z.number().int().min(0), // sequence number
   tick: z.number().int().min(0), // client predicted tick
-  dtMs: z.number().min(0).max(100), // delta time in ms since last input
+  dtMs: z.number().min(0).max(1000), // delta time in ms since last input (increased for lag tolerance)
   intent: z.object({
     steer: z.number().min(-1).max(1), // -1 = left, 1 = right
     brake: z.number().int().min(0).max(1), // 0 or 1
