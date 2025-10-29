@@ -36,7 +36,8 @@ const fastify = Fastify({
 
 // Register plugins
 await fastify.register(fastifyHelmet, {
-  contentSecurityPolicy: isDev ? false : undefined,
+  // Disable CSP for now - Vite needs blob: and inline scripts
+  contentSecurityPolicy: false,
 });
 
 await fastify.register(fastifyCors, {
