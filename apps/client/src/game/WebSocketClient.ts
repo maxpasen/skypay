@@ -43,13 +43,15 @@ export class WebSocketClient {
         this.setStatus('connected');
         this.reconnectAttempts = 0;
 
-        // Send auth message
-        const authMessage = {
+        // Send auth message - omit roomCode if undefined
+        const authMessage: any = {
           type: 'auth',
           token,
           mode,
-          roomCode,
         };
+        if (roomCode !== undefined) {
+          authMessage.roomCode = roomCode;
+        }
         console.log('Sending auth message:', authMessage);
         this.send(authMessage as ClientMessage);
       };
