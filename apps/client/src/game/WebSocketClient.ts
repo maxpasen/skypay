@@ -105,13 +105,18 @@ export class WebSocketClient {
   }
 
   sendInput(seq: number, tick: number, dtMs: number, intent: any) {
-    this.send({
+    const inputMessage = {
       type: 'input',
       seq,
       tick,
       dtMs,
       intent,
-    } as ClientMessage);
+    };
+    // Log first input message to debug validation
+    if (seq === 1) {
+      console.log('Sending first input message:', inputMessage);
+    }
+    this.send(inputMessage as ClientMessage);
   }
 
   ping() {

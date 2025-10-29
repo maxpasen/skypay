@@ -79,7 +79,8 @@ export class WebSocketServerManager {
         // Validate message
         const parsed = ClientMessageSchema.safeParse(message);
         if (!parsed.success) {
-          this.sendError(ws, 'invalid_message', 'Invalid message format');
+          logger.error({ message, errors: parsed.error.issues }, 'Message validation failed');
+          this.sendError(ws, 'invalid_message', `Invalid message format: ${parsed.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ')}`);
           return;
         }
 
