@@ -4,7 +4,7 @@
   "private": true,
   "description": "A modern SkiFree-like endless downhill ski game with multiplayer",
   "scripts": {
-    "start": "pnpm --filter @skipay/server start",
+    "start": "pnpm --filter @skipay/server db:push && pnpm --filter @skipay/server start",
     "dev": "concurrently -n client,server \"pnpm --filter @skipay/client dev\" \"pnpm --filter @skipay/server dev\"",
     "build": "pnpm --filter @skipay/shared build && pnpm --filter @skipay/server build && pnpm --filter @skipay/client build",
     "lint": "eslint . --ext .ts,.tsx",
