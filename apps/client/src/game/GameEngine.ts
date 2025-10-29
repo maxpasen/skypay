@@ -80,7 +80,8 @@ export class GameEngine {
       },
       onError: (msg) => {
         console.error('Server error:', msg);
-        alert('Server error: ' + msg.message);
+        console.error('Error details - code:', msg.code, 'message:', msg.message);
+        alert(`Server error: ${msg.code}\n${msg.message}`);
       },
       onConnectionChange: (status) => {
         console.log('Connection status:', status);
