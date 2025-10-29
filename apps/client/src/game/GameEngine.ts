@@ -68,10 +68,11 @@ export class GameEngine {
 
     this.wsClient = new WebSocketClient(wsUrl, {
       onWelcome: (msg) => {
-        console.log('Welcome:', msg);
+        console.log('Welcome received:', msg);
         this.myPlayerId = msg.playerId;
 
         // Start game loop
+        console.log('Starting game loop...');
         this.start();
       },
       onSnapshot: (msg) => {
@@ -79,6 +80,7 @@ export class GameEngine {
       },
       onError: (msg) => {
         console.error('Server error:', msg);
+        alert('Server error: ' + msg.message);
       },
       onConnectionChange: (status) => {
         console.log('Connection status:', status);
@@ -89,6 +91,8 @@ export class GameEngine {
   }
 
   private handleSnapshot(snapshot: ServerSnapshot) {
+    console.log('Received snapshot:', snapshot.tick, 'players:', snapshot.players.length);
+
     // Update players
     this.players.clear();
     for (const player of snapshot.players) {
@@ -123,12 +127,18 @@ export class GameEngine {
   }
 
   start() {
-    if (this.running) return;
+    if (this.running) {
+      console.log('Game already running');
+      return;
+    }
 
     // Initialize solo mode if no WebSocket
     if (!this.wsClient) {
       this.isSoloMode = true;
       this.soloPhysics = new SoloPhysics();
+      console.log('Starting in SOLO mode');
+    } else {
+      console.log('Starting in MULTIPLAYER mode');
     }
 
     this.running = true;
@@ -227,6 +237,13 @@ export class GameEngine {
     }
     // Multiplayer mode rendering
     else if (this.myPlayerId) {
+      // Wait for first snapshot with player data
+      if (this.players.size === 0) {
+        // Show "Connecting..." text
+        this.renderer.drawLoadingText('Connecting to match...');
+        return;
+      }
+
       const myPlayer = this.players.get(this.myPlayerId);
       if (myPlayer) {
         this.renderer.updateCamera(myPlayer);

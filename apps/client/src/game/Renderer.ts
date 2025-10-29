@@ -277,4 +277,14 @@ export class Renderer {
 
     this.ctx.restore();
   }
+
+  drawLoadingText(text: string) {
+    this.ctx.save();
+    this.ctx.fillStyle = '#000000';
+    this.ctx.font = 'bold 32px sans-serif';
+    this.ctx.textAlign = 'center';
+    this.ctx.textBaseline = 'middle';
+    this.ctx.fillText(text, this.width / 2, this.height / 2);
+    this.ctx.restore();
+  }
 }
