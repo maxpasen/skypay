@@ -34,7 +34,10 @@ export function Game() {
         .find((row) => row.startsWith('token='))
         ?.split('=')[1] || 'guest';
 
-      engine.connectMultiplayer(token, mode);
+      // Map URL mode to server MatchMode enum
+      const serverMode = mode === 'quick' ? 'race' : mode;
+
+      engine.connectMultiplayer(token, serverMode);
       setConnectionStatus(token === 'guest' ? 'Guest Mode' : 'Connected');
     } else {
       // Solo mode - just start the game loop

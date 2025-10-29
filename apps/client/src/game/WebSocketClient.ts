@@ -44,12 +44,14 @@ export class WebSocketClient {
         this.reconnectAttempts = 0;
 
         // Send auth message
-        this.send({
+        const authMessage = {
           type: 'auth',
           token,
           mode,
           roomCode,
-        } as ClientMessage);
+        };
+        console.log('Sending auth message:', authMessage);
+        this.send(authMessage as ClientMessage);
       };
 
       this.ws.onmessage = (event) => {
